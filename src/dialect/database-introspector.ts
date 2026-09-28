@@ -11,6 +11,11 @@ export interface DatabaseIntrospector {
    * Get tables and views metadata.
    */
   getTables(options?: DatabaseMetadataOptions): Promise<TableMetadata[]>
+
+  /**
+   * Get named database types if the dialect supports it.
+   */
+  getTypes?(): Promise<TypeMetadata[]>
 }
 
 export interface DatabaseMetadataOptions {

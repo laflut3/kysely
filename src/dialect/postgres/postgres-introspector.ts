@@ -67,22 +67,24 @@ export class PostgresIntrospector implements DatabaseIntrospector {
       )
 
       if (!type) {
+        const kind = parseTypeKind(rawType.type_kind, rawType.type_category)
+
         type = {
           name: rawType.name,
           schema: rawType.schema,
-          kind: parseTypeKind(rawType.type_kind, rawType.type_category),
+          kind,
           ...(rawType.base_type && { baseType: rawType.base_type }),
           ...(rawType.base_type_schema && {
             baseTypeSchema: rawType.base_type_schema,
           }),
-          ...(rawType.enum_value && { values: [] }),
+          ...(kind === 'enum' && { values: [] }),
         }
 
         types.push(type)
       }
 
-      if (rawType.enum_value) {
-        type.values?.push(rawType.enum_value)
+      if (rawType.enum_value !== null) {
+        type.values!.push(rawType.enum_value)
       }
     }
 

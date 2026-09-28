@@ -1,19 +1,19 @@
-import type { TypeMetadata, TypeMetadataKind } from './database-introspector.js'
-
-export interface TypeMetadataProvider {
-  getTypes?(): Promise<TypeMetadata[]>
-}
+import type {
+  DatabaseIntrospector,
+  TypeMetadata,
+  TypeMetadataKind,
+} from './database-introspector.js'
 
 export class TypeMetadataQueryBuilder<
   K extends TypeMetadataKind | undefined = undefined,
 > {
-  readonly #introspector: TypeMetadataProvider
+  readonly #introspector: DatabaseIntrospector
   readonly #name: string
   readonly #schema?: string
   readonly #kind?: K
 
   constructor(
-    introspector: TypeMetadataProvider,
+    introspector: DatabaseIntrospector,
     name: string,
     schema?: string,
     kind?: K,
@@ -51,12 +51,20 @@ export class TypeMetadataQueryBuilder<
     }
 
     const types = await this.#introspector.getTypes()
-    const type = types.find(
+    const matchingTypes = types.filter(
       (type) =>
         type.name === this.#name &&
         (this.#schema === undefined || type.schema === this.#schema) &&
         (this.#kind === undefined || type.kind === this.#kind),
     )
+
+    if (matchingTypes.length > 1) {
+      throw new Error(
+        `type "${this.#name}" exists in multiple schemas; specify a schema`,
+      )
+    }
+
+    const type = matchingTypes[0]
 
     if (!type) {
       const schema = this.#schema ? ` in schema "${this.#schema}"` : ''
